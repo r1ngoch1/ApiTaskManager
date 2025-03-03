@@ -2,6 +2,8 @@ package com.royal.taskManagement.controller;
 
 import com.royal.taskManagement.dto.TaskDTO;
 import com.royal.taskManagement.entity.User;
+import com.royal.taskManagement.entity.enums.TaskPriority;
+import com.royal.taskManagement.entity.enums.TaskStatus;
 import com.royal.taskManagement.service.TaskService;
 import com.royal.taskManagement.service.UserDetailsServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -164,6 +166,54 @@ public class TaskController {
     }
 
     /**
+     * Получает список задач, созданных текущим авторизованным пользователем.
+     *
+     * @param userDetails данные текущего пользователя
+     * @param pageable параметры пагинации
+     * @return список задач, созданных пользователем
+     */
+    @Operation(summary = "Получить задачи по автору", description = "Возвращает список задач, созданных текущим пользователем")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешный ответ со списком задач"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+    })
+    @GetMapping("/author")
+    public ResponseEntity<?> getTasksByAuthor(@AuthenticationPrincipal UserDetails userDetails, Pageable pageable) {
+        try {
+            User author = userDetailsServiceImpl.findUserFromPrincipal(userDetails);
+            Page<TaskDTO> tasks = taskService.getTasksByAuthor(author, pageable);
+            return ResponseEntity.ok(tasks);
+        } catch (Exception e) {
+            LOGGER.error("Ошибка при выборе задач автором: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при выборе задач автором: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Получает список задач, назначенных текущему авторизованному пользователю.
+     *
+     * @param userDetails данные текущего пользователя
+     * @param pageable параметры пагинации
+     * @return список задач, назначенных пользователю
+     */
+    @Operation(summary = "Получить задачи по исполнителю", description = "Возвращает список задач, назначенных текущему пользователю")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешный ответ со списком задач"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+    })
+    @GetMapping("/assignee")
+    public ResponseEntity<?> getTasksByAssignee(@AuthenticationPrincipal UserDetails userDetails, Pageable pageable) {
+        try {
+            User assignee = userDetailsServiceImpl.findUserFromPrincipal(userDetails);
+            Page<TaskDTO> tasks = taskService.getTasksByAssignee(assignee, pageable);
+            return ResponseEntity.ok(tasks);
+        } catch (Exception e) {
+            LOGGER.error("Ошибка при выборке задач назначенным лицом: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при выборке задач назначенным лицом: " + e.getMessage());
+        }
+    }
+
+    /**
      * Получение задач пользователя (автор или исполнитель).
      *
      * @param userDetails данные аутентифицированного пользователя
@@ -190,6 +240,81 @@ public class TaskController {
         } catch (Exception e) {
             LOGGER.error("Ошибка при выборке задач автором или исполнителем: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при выборке задач автором или исполнителем: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Назначает задачу пользователю.
+     *
+     * @param id          идентификатор задачи
+     * @param assigneeId  идентификатор пользователя, которому назначается задача
+     * @param userDetails данные аутентифицированного пользователя
+     * @return обновленная информация о задаче
+     */
+    @PatchMapping("/{id}/assign")
+    @Operation(summary = "Назначение задачи", description = "Назначает задачу указанному пользователю")
+    public ResponseEntity<?> assignTask(
+            @PathVariable @Parameter(description = "ID задачи") Long id,
+            @RequestParam @Parameter(description = "ID пользователя, которому назначается задача") Long assigneeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            User user = userDetailsServiceImpl.findUserFromPrincipal(userDetails);
+            TaskDTO taskDTO = taskService.assignTask(id, assigneeId, user);
+            return ResponseEntity.ok(taskDTO);
+        } catch (Exception e) {
+            LOGGER.error("Ошибка при назначении задачи: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при назначении задачи: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Обновляет статус задачи.
+     *
+     * @param id          идентификатор задачи
+     * @param status      новый статус задачи
+     * @param userDetails данные аутентифицированного пользователя
+     * @return обновленная информация о задаче
+     */
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Обновление статуса задачи", description = "Обновляет статус указанной задачи")
+    public ResponseEntity<?> updateTaskStatus(
+            @PathVariable @Parameter(description = "ID задачи") Long id,
+            @RequestParam @Parameter(description = "Новый статус задачи") TaskStatus status,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            User user = userDetailsServiceImpl.findUserFromPrincipal(userDetails);
+            TaskDTO taskDTO = taskService.updateTaskStatus(id, status, user);
+            return ResponseEntity.ok(taskDTO);
+        } catch (Exception e) {
+            LOGGER.error("Ошибка при обновлении статуса задачи: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при обновлении статуса задачи: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Обновляет приоритет задачи.
+     *
+     * @param id          идентификатор задачи
+     * @param priority    новый приоритет задачи
+     * @param userDetails данные аутентифицированного пользователя
+     * @return обновленная информация о задаче
+     */
+    @PatchMapping("/{id}/priority")
+    @Operation(summary = "Обновление приоритета задачи", description = "Обновляет приоритет указанной задачи")
+    public ResponseEntity<?> updateTaskPriority(
+            @PathVariable @Parameter(description = "ID задачи") Long id,
+            @RequestParam @Parameter(description = "Новый приоритет задачи") TaskPriority priority,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            User user = userDetailsServiceImpl.findUserFromPrincipal(userDetails);
+            TaskDTO taskDTO = taskService.updateTaskPriority(id, priority, user);
+            return ResponseEntity.ok(taskDTO);
+        } catch (Exception e) {
+            LOGGER.error("Ошибка при обновлении приоритета задачи: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при обновлении приоритета задачи: " + e.getMessage());
         }
     }
 }

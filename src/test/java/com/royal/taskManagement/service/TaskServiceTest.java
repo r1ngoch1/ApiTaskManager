@@ -1,4 +1,4 @@
-package com.royal.taskManagement;
+package com.royal.taskManagement.service;
 
 import com.royal.taskManagement.dto.TaskDTO;
 import com.royal.taskManagement.entity.Role;
@@ -8,9 +8,6 @@ import com.royal.taskManagement.entity.enums.TaskPriority;
 import com.royal.taskManagement.entity.enums.TaskStatus;
 import com.royal.taskManagement.repository.TaskRepository;
 import com.royal.taskManagement.repository.UserRepository;
-import com.royal.taskManagement.service.CommentService;
-import com.royal.taskManagement.service.CommentServiceImpl;
-import com.royal.taskManagement.service.TaskServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

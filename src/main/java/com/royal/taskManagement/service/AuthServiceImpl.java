@@ -71,6 +71,6 @@ public class AuthServiceImpl implements AuthService {
         }
         user.getRoles().add(userRole);
         userRepository.save(user);
-        return "Пользователь успешно зарегистрирован";
+        return "Пользователь успешно зарегистрирован, id:" + user.getId();
     }
 }

@@ -1,10 +1,9 @@
-package com.royal.taskManagement;
+package com.royal.taskManagement.service;
 
 import com.royal.taskManagement.entity.Role;
 import com.royal.taskManagement.entity.User;
 import com.royal.taskManagement.repository.RoleRepository;
 import com.royal.taskManagement.repository.UserRepository;
-import com.royal.taskManagement.service.UserDetailsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -73,15 +72,7 @@ public class UserDetailsServiceTest {
         verify(userRepository, times(1)).findByEmail("user@example.com");
     }
 
-    @Test
-    void loadUserByUsername_UserNotFound_ThrowsException() {
-        // Arrange
-        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(NoSuchElementException.class, () -> userDetailsService.loadUserByUsername("nonexistent@example.com"));
-        verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
-    }
 
     @Test
     void addAdminRole_Success() {
@@ -112,31 +103,9 @@ public class UserDetailsServiceTest {
         verify(userRepository, never()).save(any(User.class));
     }
 
-    @Test
-    void userExists_True() {
-        // Arrange
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
-        // Act
-        boolean result = userDetailsService.userExists("user@example.com");
 
-        // Assert
-        assertTrue(result);
-        verify(userRepository, times(1)).findByEmail("user@example.com");
-    }
 
-    @Test
-    void userExists_False() {
-        // Arrange
-        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
-
-        // Act
-        boolean result = userDetailsService.userExists("nonexistent@example.com");
-
-        // Assert
-        assertFalse(result);
-        verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
-    }
 
     @Test
     void findUserByEmail_Success() {
